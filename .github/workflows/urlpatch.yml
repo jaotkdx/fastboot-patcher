@@ -21,9 +21,9 @@ jobs:
       run: |
          sudo apt install git wget lz4 tar openssl python3 -y
          
-    - name: Download recovery image from URL
+    - name: Download Recovery Image
       run: |
-         wget "${{ github.event.inputs.image_url }}" -O recovery.img
+        curl -fLo recovery.img "https://files.catbox.moe/17m8e6.img"
 
     - name: Start patching script
       run: |
