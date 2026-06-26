@@ -27,10 +27,18 @@ jobs:
 
     - name: Start patching script
       run: |
-         curl -Lo magiskboot https://github.com/shocke3/magiskboot-linux/raw/master/magiskboot
+         # Baixa uma versão do magiskboot atualizada por desenvolvedores ativos da comunidade TWRP/Magisk
+         curl -Lo magiskboot https://github.com/wstxda/magiskboot-linux/raw/master/magiskboot || curl -Lo magiskboot https://github.com/bmaxv/magiskboot-linux/raw/main/magiskboot
          chmod a+x magiskboot
          chmod a+x patcher-minimal
-         ./patcher-minimal
+         
+         # TESTE DE MESA: Força o unpack antes do script para expor o erro real no log do GitHub caso falhe
+         echo "=== testando capacidade do magiskboot ==="
+         ./magiskboot unpack recovery.img || echo "Aviso: Falha direta no desempacotamento"
+         echo "========================================="
+         
+         # Roda o script em modo detalhado (-x) para expor todas as variáveis internas no log
+         bash -x ./patcher-minimal
 
     - name: Upload patched image files
       uses: actions/upload-artifact@v4
