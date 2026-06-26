@@ -27,28 +27,23 @@ jobs:
 
     - name: Start patching script
       run: |
-         # Baixa uma versão do magiskboot atualizada por desenvolvedores ativos da comunidade TWRP/Magisk
-         curl -Lo magiskboot https://github.com/wstxda/magiskboot-linux/raw/master/magiskboot || curl -Lo magiskboot https://github.com/bmaxv/magiskboot-linux/raw/main/magiskboot
+         # 1. Força o curl a falhar de verdade (-f) se a URL não existir, pulando para a próxima válida
+         curl -fLo magiskboot https://github.com/bmaxv/magiskboot-linux/raw/main/magiskboot || curl -fLo magiskboot https://github.com/shocke3/magiskboot-linux/raw/master/magiskboot
          chmod a+x magiskboot
          chmod a+x patcher-minimal
-         
-         # TESTE DE MESA: Força o unpack antes do script para expor o erro real no log do GitHub caso falhe
-         echo "=== testando capacidade do magiskboot ==="
-         ./magiskboot unpack recovery.img || echo "Aviso: Falha direta no desempacotamento"
-         echo "========================================="
-         
-         # Roda o script em modo detalhado (-x) para expor todas as variáveis internas no log
-         bash -x ./patcher-minimal
 
-    - name: Upload patched image files
-      uses: actions/upload-artifact@v4
-      with:
-        path: output/
-        name: Patched Recovery Image Bundle
-        if-no-files-found: error
-        retention-days: 15
-        compression-level: 0
-        overwrite: true
+         # 2. DIAGNÓSTICO: Verifica se o seu link do transfer.sh baixou uma imagem real ou um HTML de erro
+         echo "=== Analisando o arquivo baixado ==="
+         file recovery.img || true
+         head -n 2 recovery.img | cut -c 1-100 || true
+         echo "===================================="
+
+         # 3. CORREÇÃO DE SEGURANÇA: Se a imagem não tiver a tag SEANDROIDENFORCE, 
+         # fazemos o script usar o tamanho total do arquivo em vez de quebrar o 'dd'
+         sed -i 's/count=$off/count=${off:-$(stat -c%s raw.img)}/g' patcher-minimal
+
+         # 4. Roda o script com acompanhamento detalhado
+         bash -x ./patcher-minimal
         
     - name: Upload keys for patched image
       uses: actions/upload-artifact@v4
