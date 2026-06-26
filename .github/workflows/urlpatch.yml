@@ -31,11 +31,8 @@ jobs:
          unzip -j magisk.zip "lib/x86_64/libmagiskboot.so" -d .
          mv libmagiskboot.so magiskboot
          chmod a+x magiskboot
+         sudo mv magiskboot /usr/bin/
          chmod a+x patcher-minimal
-
-         echo "=== Testando o magiskboot oficial ==="
-         ./magiskboot --help || true
-         echo "===================================="
 
          sed -i 's/count=$off/count=${off:-$(stat -c%s raw.img)}/g' patcher-minimal
 
@@ -47,6 +44,8 @@ jobs:
         name: Magisk-Patched-Recovery-Bundle
         path: |
           *.img
+          *.tar
+          *.tar.md5
           keys/
         if-no-files-found: error
         retention-days: 15
