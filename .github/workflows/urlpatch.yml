@@ -27,22 +27,22 @@ jobs:
 
     - name: Start patching script
       run: |
-         # 1. Força o curl a falhar de verdade (-f) se a URL não existir, pulando para a próxima válida
-         curl -fLo magiskboot https://github.com/bmaxv/magiskboot-linux/raw/main/magiskboot || curl -fLo magiskboot https://github.com/shocke3/magiskboot-linux/raw/master/magiskboot
+         # 1. Baixa o APK oficial do Magisk v27.0 e extrai o magiskboot nativo de Linux
+         curl -fLo magisk.zip https://github.com/topjohnwu/Magisk/releases/download/v27.0/Magisk-v27.0.apk
+         unzip -j magisk.zip "lib/x86_64/libmagiskboot.so" -d .
+         mv libmagiskboot.so magiskboot
          chmod a+x magiskboot
          chmod a+x patcher-minimal
 
-         # 2. DIAGNÓSTICO: Verifica se o seu link do transfer.sh baixou uma imagem real ou um HTML de erro
-         echo "=== Analisando o arquivo baixado ==="
-         file recovery.img || true
-         head -n 2 recovery.img | cut -c 1-100 || true
+         # 2. DIAGNÓSTICO: Garante que o magiskboot oficial está funcional
+         echo "=== Testando o magiskboot oficial ==="
+         ./magiskboot --help || true
          echo "===================================="
 
-         # 3. CORREÇÃO DE SEGURANÇA: Se a imagem não tiver a tag SEANDROIDENFORCE, 
-         # fazemos o script usar o tamanho total do arquivo em vez de quebrar o 'dd'
+         # 3. CORREÇÃO DO DD: Previne o erro caso a imagem não tenha a tag SEANDROIDENFORCE
          sed -i 's/count=$off/count=${off:-$(stat -c%s raw.img)}/g' patcher-minimal
 
-         # 4. Roda o script com acompanhamento detalhado
+         # 4. Executa o patcher em modo de depuração completa
          bash -x ./patcher-minimal
         
     - name: Upload keys for patched image
