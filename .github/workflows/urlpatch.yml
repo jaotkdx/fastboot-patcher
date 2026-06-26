@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       image_url:
-        description: 'Recovery Image URL'
-        default: 'https://transfer.sh/<file-id>/<file>.img'
+        description: 'Coloque a URL Direta da sua imagem aqui'
+        default: 'https://files.catbox.moe/17m8e6.img'
         required: true
         type: string
 
@@ -23,33 +23,31 @@ jobs:
          
     - name: Download Recovery Image
       run: |
-        curl -fLo recovery.img "https://files.catbox.moe/17m8e6.img"
+        curl -fLo recovery.img "${{ github.event.inputs.image_url }}"
 
     - name: Start patching script
       run: |
-         # 1. Baixa o APK oficial do Magisk v27.0 e extrai o magiskboot nativo de Linux
          curl -fLo magisk.zip https://github.com/topjohnwu/Magisk/releases/download/v27.0/Magisk-v27.0.apk
          unzip -j magisk.zip "lib/x86_64/libmagiskboot.so" -d .
          mv libmagiskboot.so magiskboot
          chmod a+x magiskboot
          chmod a+x patcher-minimal
 
-         # 2. DIAGNÓSTICO: Garante que o magiskboot oficial está funcional
          echo "=== Testando o magiskboot oficial ==="
          ./magiskboot --help || true
          echo "===================================="
 
-         # 3. CORREÇÃO DO DD: Previne o erro caso a imagem não tenha a tag SEANDROIDENFORCE
          sed -i 's/count=$off/count=${off:-$(stat -c%s raw.img)}/g' patcher-minimal
 
-         # 4. Executa o patcher em modo de depuração completa
          bash -x ./patcher-minimal
         
-    - name: Upload keys for patched image
+    - name: Upload Patched Image and Keys
       uses: actions/upload-artifact@v4
       with:
-        path: keys/
-        name: Patched Image Key Bundle
+        name: Magisk-Patched-Recovery-Bundle
+        path: |
+          *.img
+          keys/
         if-no-files-found: error
         retention-days: 15
         compression-level: 0
